@@ -1,0 +1,27 @@
+# Build context is repos/. Keep secrets and bulk out of the image.
+#
+# .env first and explicitly: it sits beside the code in this bundle, and a
+# COPY that swept it in would bake a live OpenAI key into a layer pushed to
+# a container registry.
+**/.env
+**/.env.*
+!**/.env.example
+
+**/__pycache__/
+**/*.pyc
+**/.venv/
+**/.git/
+**/.pytest_cache/
+
+# Tests and evals are not part of the served image.
+**/tests/
+**/test_*.py
+**/run_eval.py
+**/eval_q.json
+
+# Corpus and snapshots are copyrighted and must never enter an image that
+# gets pushed to a registry.
+**/*.jsonl
+**/*.pdf
+**/escalations.db
+**/documents.example.json

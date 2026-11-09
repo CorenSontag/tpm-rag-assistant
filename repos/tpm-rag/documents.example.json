@@ -1,0 +1,7 @@
+{
+  "pdfs": [
+    {"pdf_path": "path/to/tpm-lean-factory.pdf", "source_id": "tpm_lean_factory"},
+    {"pdf_path": "path/to/tpm-participation.pdf", "source_id": "tpm_collab"},
+    {"pdf_path": "path/to/autonomous-maintenance.pdf", "source_id": "content_am"}
+  ]
+}

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TPM chatbot — local test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body { font-family:'Noto Sans Thai',system-ui,sans-serif; line-height:1.8;
+         max-width:720px; margin:56px auto 160px; padding:0 24px; color:#1a1a1a; }
+  h1 { font-weight:500; font-size:26px; }
+  h2 { font-weight:500; font-size:19px; margin-top:36px; }
+  code { background:#f1efe8; padding:2px 6px; border-radius:4px; font-size:14px;
+         font-family:ui-monospace,Consolas,monospace; }
+  pre { background:#f1efe8; padding:12px 14px; border-radius:8px; overflow-x:auto;
+        font-size:13px; line-height:1.5; }
+  li { margin:10px 0; }
+  .q { background:#f1efe8; padding:10px 12px; border-radius:8px; margin:8px 0;
+       border-left:2px solid #b4b2a9; }
+  .why { color:#5f5e5a; font-size:14px; }
+  .warn { background:#faeeda; color:#633806; padding:12px 14px; border-radius:8px; }
+</style>
+</head>
+<body>
+
+<h1>TPM chatbot — local test</h1>
+
+<p>Stands in for a WordPress page. The bubble is bottom-right. If it works here
+it will work on the real site.</p>
+
+<div class="warn">
+Open this at <code>http://localhost:5173/demo.html</code>. Double-clicking the
+file gives an origin of <code>null</code> and CORS blocks every request.
+</div>
+
+<h2>Three things must be running</h2>
+
+<pre>docker run -p 6333:6333 -v "$(pwd)/qdrant_storage:/qdrant/storage" qdrant/qdrant
+
+# in the API repo
+$env:ALLOWED_ORIGINS="http://localhost:5173"
+uv run uvicorn app.api:app --reload --port 8001
+
+# in this repo
+python -m http.server 5173</pre>
+
+<p>Check the API first: <code>curl.exe http://localhost:8001/health</code>
+should report <code>points: 1764</code>.</p>
+
+<h2>Try these, in order</h2>
+
+<div class="q">สวัสดีครับ</div>
+<p class="why">Should get a friendly reply with <strong>no sources panel</strong>.
+The agent decides small talk needs no document lookup.</p>
+
+<div class="q">OEE คืออะไร ใช้วัดอะไร และประกอบด้วยองค์ประกอบกี่ส่วน</div>
+<p class="why">Grounded answer with a หน้า citation. Expand the sources panel to
+see which pages it used.</p>
+
+<div class="q">แล้วมีกี่ขั้นตอน</div>
+<p class="why">A follow-up with no subject. It should still make sense — the whole
+conversation goes with every request, so the agent rewrites the search query
+itself. This is the thing that used to fail.</p>
+
+<div class="q">What are the eight pillars of TPM?</div>
+<p class="why">English in, English out — including the labels on the sources
+panel. Retrieval still runs in Thai underneath, because the books are Thai.</p>
+
+<div class="q">How much does your training cost?</div>
+<p class="why">Should decline warmly and point at your pricing or contact page.
+If it points nowhere, <code>PRICING_URL</code> and <code>CONTACT_URL</code> are
+not set on the server.</p>
+
+<div class="q">ขอคุยกับเจ้าหน้าที่หน่อยครับ</div>
+<p class="why">Should ask for your name and email <em>before</em> handing off,
+then confirm in green. Check it landed:<br>
+<code>curl.exe -H "X-Admin-Token: YOUR_TOKEN" http://localhost:8001/escalations</code></p>
+
+<div class="q">ประเทศไทยมีประชากรเท่าไหร่</div>
+<p class="why">Outside the books. It should decline rather than answer from
+general knowledge. A refusal here is correct behaviour, not a bug.</p>
+
+<h2>If something looks wrong</h2>
+
+<ul>
+  <li><strong>Bubble appears, every message errors</strong> — open the console
+      with F12. A CORS message means <code>ALLOWED_ORIGINS</code> and the port
+      you served this page on disagree.</li>
+  <li><strong>Long pause then an error</strong> — the API is up but OpenAI is
+      not responding. Check the uvicorn terminal.</li>
+  <li><strong>Sources panel on a greeting</strong> — the tool-choice rule in
+      <code>chat.py</code>'s system prompt is not being followed.</li>
+  <li><strong>Answers with no citations on TPM questions</strong> — it is
+      answering from memory. Watch for <code>searched=False</code> in the
+      uvicorn log.</li>
+  <li><strong>Nothing at all</strong> — hard refresh with Ctrl+Shift+R. The
+      browser caches <code>tpm-widget.js</code> aggressively.</li>
+</ul>
+
+<p class="why">Every turn prints one line in the uvicorn terminal:<br>
+<code>chat session=abc turns=4 searched=True escalated=False lang=th 4.31s</code></p>
+
+<script src="tpm-widget.js" data-api="http://localhost:8001"></script>
+</body>
+</html>

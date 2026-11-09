@@ -1,0 +1,35 @@
+# Secrets. Never commit either of these.
+.env
+*.env
+!.env.example
+!*.env.example
+
+# The corpus and anything derived from it is copyrighted and stays out.
+data/
+*.snapshot
+*.npz
+*.jsonl
+corpus*.json
+eval_q.json
+eval_recall.json
+config/documents.json
+config/SOURCE-FILENAMES.md
+*.pdf
+
+# Visitor contact details.
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+
+# Patch backups are deliberately NOT ignored, so a stray one shows up in
+# `git status` instead of hiding.
